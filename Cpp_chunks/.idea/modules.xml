@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Cpp.iml" filepath="$PROJECT_DIR$/.idea/Cpp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/Cpp_chunks.iml" filepath="$PROJECT_DIR$/.idea/Cpp_chunks.iml" />
     </modules>
   </component>
 </project>
