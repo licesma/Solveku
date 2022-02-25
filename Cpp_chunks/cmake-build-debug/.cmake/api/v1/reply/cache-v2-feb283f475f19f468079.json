@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/Users/lices/Documents/Tesis/Cpp_chunks/cmake-build-debug"
+			"value" : "c:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -623,7 +623,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/Users/lices/Documents/Tesis/Cpp_chunks"
+			"value" : "C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1239,7 +1239,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/lices/Documents/Tesis/Cpp_chunks/cmake-build-debug"
+			"value" : "C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug"
 		},
 		{
 			"name" : "Cpp_chunks_IS_TOP_LEVEL",
@@ -1263,7 +1263,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/lices/Documents/Tesis/Cpp_chunks"
+			"value" : "C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks"
 		}
 	],
 	"kind" : "cache",

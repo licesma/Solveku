@@ -42,7 +42,7 @@ rule CXX_EXECUTABLE_LINKER__Cpp_chunks_Debug
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = "C:\Program Files\JetBrains\CLion 2021.3.2\bin\cmake\win\bin\cmake.exe" --regenerate-during-build -SC:\Users\lices\Documents\Tesis\Cpp_chunks -BC:\Users\lices\Documents\Tesis\Cpp_chunks\cmake-build-debug
+  command = "C:\Program Files\JetBrains\CLion 2021.3.2\bin\cmake\win\bin\cmake.exe" --regenerate-during-build -SC:\Users\lices\Documents\Tesis\Solveku\Cpp_chunks -BC:\Users\lices\Documents\Tesis\Solveku\Cpp_chunks\cmake-build-debug
   description = Re-running CMake...
   generator = 1
 

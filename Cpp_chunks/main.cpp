@@ -5,16 +5,15 @@ using namespace std;
 #include <numeric>
 #include <cmath>
 #include <sstream>
+#include <unordered_set>
+
+int n = 9;
 class Set{
 public:
-    vector<bool> array;
-    int n, size = 0;
-    Set(int n){
-        this->n = n;
-        this->array = vector<bool>(n, false);
-    }
+    unordered_set<int> set();
+
     bool checkValid(int num) const{
-        if(num < 1 || n < num){
+        if(num < 1 ||  n < num){
             stringstream ss;
             ss<<"Value must be in [1,";   ss<<n;   ss<<"].";
             throw std::invalid_argument( ss.str() );
@@ -29,6 +28,7 @@ public:
     }
 
     bool has(int num){
+
         checkValid(num);
         return array[num-1];
     }
@@ -114,7 +114,6 @@ public:
 
 class SudokuGrid {
 private:
-    int n ;
     vector<int> I, Omega;
     vector<vector<SudokuCell>> grid;
     BracketImage *images;

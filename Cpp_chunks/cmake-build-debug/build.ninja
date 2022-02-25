@@ -39,13 +39,13 @@ include CMakeFiles/rules.ninja
 #############################################
 # Logical path to working directory; prefix for absolute paths.
 
-cmake_ninja_workdir = C$:/Users/lices/Documents/Tesis/Cpp_chunks/cmake-build-debug/
+cmake_ninja_workdir = C$:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug/
 
 #############################################
 # Utility command for rebuild_cache
 
 build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\lices\Documents\Tesis\Cpp_chunks\cmake-build-debug && "C:\Program Files\JetBrains\CLion 2021.3.2\bin\cmake\win\bin\cmake.exe" --regenerate-during-build -SC:\Users\lices\Documents\Tesis\Cpp_chunks -BC:\Users\lices\Documents\Tesis\Cpp_chunks\cmake-build-debug"
+  COMMAND = cmd.exe /C "cd /D C:\Users\lices\Documents\Tesis\Solveku\Cpp_chunks\cmake-build-debug && "C:\Program Files\JetBrains\CLion 2021.3.2\bin\cmake\win\bin\cmake.exe" --regenerate-during-build -SC:\Users\lices\Documents\Tesis\Solveku\Cpp_chunks -BC:\Users\lices\Documents\Tesis\Solveku\Cpp_chunks\cmake-build-debug"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -61,7 +61,7 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 build cmake_object_order_depends_target_Cpp_chunks: phony || CMakeFiles/Cpp_chunks.dir
 
-build CMakeFiles/Cpp_chunks.dir/main.cpp.obj: CXX_COMPILER__Cpp_chunks_Debug C$:/Users/lices/Documents/Tesis/Cpp_chunks/main.cpp || cmake_object_order_depends_target_Cpp_chunks
+build CMakeFiles/Cpp_chunks.dir/main.cpp.obj: CXX_COMPILER__Cpp_chunks_Debug C$:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/main.cpp || cmake_object_order_depends_target_Cpp_chunks
   DEP_FILE = CMakeFiles\Cpp_chunks.dir\main.cpp.obj.d
   FLAGS = -g -std=gnu++14
   OBJECT_DIR = CMakeFiles\Cpp_chunks.dir
@@ -93,7 +93,7 @@ build Cpp_chunks.exe: CXX_EXECUTABLE_LINKER__Cpp_chunks_Debug CMakeFiles/Cpp_chu
 # Utility command for edit_cache
 
 build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\lices\Documents\Tesis\Cpp_chunks\cmake-build-debug && "C:\Program Files\JetBrains\CLion 2021.3.2\bin\cmake\win\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\lices\Documents\Tesis\Solveku\Cpp_chunks\cmake-build-debug && "C:\Program Files\JetBrains\CLion 2021.3.2\bin\cmake\win\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -110,7 +110,7 @@ build Cpp_chunks: phony Cpp_chunks.exe
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/lices/Documents/Tesis/Cpp_chunks/cmake-build-debug
+# Folder: C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug
 
 build all: phony Cpp_chunks.exe
 

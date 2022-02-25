@@ -1,228 +1,175 @@
-class Cell:
+import math
+class SudokuCell:
+    n = 9
     def __init__(self, value=0, fixed=False):
         self.value = value
         self.fixed = fixed
-        self.a_set = set()
+        self.av_set = None
+        if not fixed:
+            self.av_set = set()
+
+    def has_value(self):
+        return self.value != 0
+
+    def av_set_remove(self, value):
+        if not self.has_value() and (value in self.av_set):
+            self.av_set.remove(value)
 
 
-class Sudoku:
+class Bracket:
+    def row_of_box(self, box_index, cell_index):
+        root = int(math.sqrt(SudokuGrid.n))
+        return root*int(box_index/root) + int(cell_index/root)
 
-    def __init__(self, string_grid):
-        self.create_grid(string_grid)
-        self.create_row_set()
-        self.create_col_set()
-        self.create_box_set()
+    def get_row(self, bracket_index, cell_index):
+        if bracket_index < SudokuGrid.n:
+            return bracket_index
+        elif bracket_index < 2*SudokuGrid.n:
+            return cell_index
+        else:
+            return self.row_of_box(bracket_index - 2*SudokuGrid.n, cell_index)
 
-    def create_grid(self, string_grid):
-        string_grid.pop(0)
-        for ls in string_grid:
-            ls.pop(0)
-        self.grid = [[Cell(int(st), True) if st.isdigit() else Cell() for st in ls] for ls in string_grid]
+    def col_of_box(self, box_index, cell_index):
+        root = int(math.sqrt(SudokuGrid.n))
+        return root*(box_index%root) + (cell_index%root)
+    def get_col(self, bracket_index, cell_index):
+        if bracket_index < SudokuGrid.n:
+            return cell_index
+        elif bracket_index < 2*SudokuGrid.n:
+            return bracket_index - SudokuGrid.n
+        else:
+            return self.col_of_box(bracket_index - 2*SudokuGrid.n, cell_index)
 
-    def get_grid(self):
-        return [[c.value for c in ls] for ls in self.grid]
 
-    def get_row(self, index):
-        # Returns a list of all the cells' indexes in a particular row.
-        return [(index, j) for j in range(9)]
+    def get_image(self, index):
+        res = set()
+        bracket = self.all[index]
+        for cell in bracket:
+            if cell.has_value():
+                if cell.value in res:
+                    raise Exception("Group constraint violated")
+                else:
+                    res.add(cell.value)
+        return res
 
-    def get_available(self, index_list):
-        return [pair for pair in index_list if self.grid[pair[0]][pair[1]].value == 0]
+    def __init__(self, sudoku):
+        self.row = [sudoku.grid[i] for i in range(sudoku.n)]
+        self.col = [[sudoku.grid[j][i] for j in range(sudoku.n)] for i in range(sudoku.n)]
+        self.box = [sudoku.box_cells(i) for i in range(sudoku.n)]
+        self.all = [self.row[i] if i < sudoku.n else self.col[i - sudoku.n] if i < 2*sudoku.n else self.box[i - 2*sudoku.n] for i in range(3*sudoku.n)]
+        self.all_images = [set() for i in range(3 * sudoku.n)]
+        self.rowImage = [self.all_images[i] for i in range(sudoku.n)]
+        self.colImage = [self.all_images[i] for i in range(sudoku.n, 2 * sudoku.n)]
+        self.boxImage = [self.all_images[i] for i in range(2 * sudoku.n, 3 * sudoku.n)]
+        for i in sudoku.I:
+            self.rowImage[i] = self.get_image(i)
+            self.colImage[i] = self.get_image(sudoku.n + i)
+            self.boxImage[i] = self.get_image(2*sudoku.n + i)
 
-    def get_col(self, index):
-        return [(i, index) for i in range(9)]
-
-    def get_box_at(self, row, col):
-        f_row = 3 * int(row / 3)
-        f_col = 3 * int(col / 3)
-        return [(i + f_row, j + f_col) for i in range(3) for j in range(3)]
-
-    def get_box(self, index):
-        return self.get_box_at(int(index / 3) * 3, (index % 3) * 3)
-
-    def create_row_set(self):
-        self.row_set = [
-            {self.grid[row][col].value for (row, col) in self.get_row(i) if self.grid[row][col].value != 0} for i in
-            range(9)]
-
-    def create_col_set(self):
-        self.col_set = [
-            {self.grid[row][col].value for (row, col) in self.get_col(i) if self.grid[row][col].value != 0} for i in
-            range(9)]
-
-    def create_box_set(self):
-        self.box_set = [
-            {self.grid[row][col].value for (row, col) in self.get_box(i) if self.grid[row][col].value != 0} for i in
-            range(9)]
-
-    def find_cell_by_num(self, cell_list, num):
-        for row, col in cell_list:
-            a_set = self.grid[row][col].a_set
-            if a_set is not None and num in a_set:
-                return row, col
-        return -1, -1
-
-    def second_state(self):
-        self.create_dics()
-        if self.check_row_hermit() is None or self.check_col_hermit() is None or self.check_box_hermit() is None:
-            self.first_stage()
-        self.third_stage()
-
-    def create_a_set(self):
-        for row in range(9):
-            for col in range(9):
-                if self.grid[row][col].value == 0:
-                    self.grid[row][col].a_set = {i + 1 for i in range(9)}.difference(
-                        self.row_set[row].union(self.col_set[col]).union(self.box_set[self.box_of(row, col)]))
-
-    def print_grid(self):
-        for ls in self.grid:
-            for c in ls:
-                print(c.value)
-                print(" ")
-            print("\n")
+class SudokuGrid:
+    n = 9
+    I = [i for i in range(n)]
+    Omega = [i for i in range(1,n+1)]
 
     def box_of(self, row, col):
         return 3 * int(row / 3) + int(col / 3)
 
-    # ________________________________________________________________________________________________________
-    # ___________________________________GENERAL_________________________________________________________
-    # ________________________________________________________________________________________________________
+    def box_cells(self, index):
+        root = int(math.sqrt(self.n))
+        start_row = root * int(index / root)
+        start_col = root * int(index % root)
+        return [self.grid[start_row + i][start_col + j] for i in range(root) for j in range(root)]
 
-    def update_value(self, row, col, num):
-        self.grid[row][col].a_set = None
+    def define_available_sets(self):
+        for row in self.I:
+            for col in self.I:
+                cell = self.grid[row][col]
+                if not cell.has_value():
+                    for val in self.Omega:
+                        if val in self.brackets.rowImage[row] or val in self.brackets.colImage[col] or val in self.brackets.boxImage[self.box_of(row, col)]:
+                            cell.av_set.remove(val)
+
+    def update_neighbors_available_set(self, row, col, num):
+        for it in self.I:
+            self.brackets.row[row][it].av_set_remove(num)
+            self.brackets.col[col][it].av_set_remove(num)
+            self.brackets.box[self.box_of(row,col)][it].av_set_remove(num)
+
+    def update_cell(self, row, col, num):
         self.grid[row][col].value = num
-        self.row_set[row].add(num)
-        self.col_set[col].add(num)
-        self.box_set[self.box_of(row, col)].add(num)
+        self.grid[row][col].av_set = None
+        if num in self.brackets.rowImage[row] or num in self.brackets.colImage[col] or num in self.brackets.boxImage[self.box_of(row,col)]:
+            raise Exception("Group constraint violated")
+        self.brackets.rowImage[row].add(num)
+        self.brackets.colImage[col].add(num)
+        self.brackets.boxImage[self.box_of(row,col)].add(num)
+        self.update_neighbors_available_set(row, col, num)
 
-    # ________________________________________________________________________________________________________
-    # ___________________________________FIRST STAGE_________________________________________________________
-    # ________________________________________________________________________________________________________
-    def first_stage(self):
-        finish = False
-        self.create_a_set()
-        while not finish:
-            finish = True
-            for row in range(9):
-                for col in range(9):
-                    cell = self.grid[row][col]
-                    if cell.value == 0 and len(cell.a_set) == 1:
-                        finish = False
-                        self.update_value(row, col, cell.a_set.pop())
-            if not finish:
-                self.create_a_set()
-        self.second_stage()
+    def stage_one(self):
+        changes = False
+        for row in self.I:
+            for col in self.I:
+                cell = self.grid[row][col]
+                if not cell.has_value() and len(cell.av_set) == 1:
+                    changes = True
+                    for num in cell.av_set:
+                        self.update_cell(row, col, num)
+        if changes:
+            self.stage_one()
+        else:
+            self.stage_two()
+    def stage_two(self):
+        changes = False
+        for bracket_index in range(len(self.brackets.all)):
+            bracket = self.brackets.all[bracket_index]
+            candidate_map = {}
+            for cell_index in SudokuGrid.I:
+                cell = bracket[cell_index]
+                if(not cell.has_value()):
+                    for candidate in cell.av_set:
+                        if candidate in candidate_map :
+                            candidate_map[candidate] = -1
+                        else:
+                            candidate_map[candidate] = cell_index
+            for candidate, cell_index in candidate_map.items():
+                if 0 <= cell_index :
+                    row = self.brackets.get_row(bracket_index, cell_index)
+                    col = self.brackets.get_col(bracket_index, cell_index)
+                    self.update_cell(row, col, candidate)
+                    changes = True
+        if changes:
+            self.stage_two()
 
-    # ________________________________________________________________________________________________________
-    # ___________________________________SECOND STAGE_________________________________________________________
-    # ________________________________________________________________________________________________________
-    def second_stage(self):
-        print("Second Stage")
-        self.define_dics()
-        row_hermit = self.check_row_hermit()
-        col_hermit = self.check_col_hermit()
-        box_hermit = self.check_box_hermit()
-        if row_hermit or col_hermit or box_hermit:
-            self.first_stage()
-            return
-        print("Finish")
+    def solve(self):
+        self.stage_two()
+    def __init__(self, number_grid):
+        self.grid = [[SudokuCell(num, True) if num != 0 else SudokuCell() for num in row] for row in number_grid]
+        for row in self.I:
+            for col in self.I:
+                cell = self.grid[row][col]
+                if not cell.has_value():
+                    for val in self.Omega:
+                        cell.av_set.add(val)
+        self.brackets = Bracket(self)
+        self.define_available_sets()
 
-    def define_dics(self):
-        self.row_dic = [{num + 1: 0 for num in range(9) if num + 1 not in self.row_set[index]} for index in range(9)]
-        self.col_dic = [{num + 1: 0 for num in range(9) if num + 1 not in self.col_set[index]} for index in range(9)]
-        self.box_dic = [{num + 1: 0 for num in range(9) if num + 1 not in self.box_set[index]} for index in range(9)]
+    def print(self):
+        for row in self.I:
+            for col in self.I:
+                print(self.grid[row][col].value, end = " ")
+                if col%3 == 2:
+                    print("", end=" ")
+            print("")
+            if row%3 == 2:
+                print("")
+
+
+    def create_grid(self, number_grid):
         for row in range(9):
             for col in range(9):
-                cell = self.grid[row][col]
-                if cell.value == 0:
-                    for num in cell.a_set:
-                        self.row_dic[row][num] += 1
-                        self.col_dic[col][num] += 1
-                        self.box_dic[self.box_of(row, col)][num] += 1
+                if self.grid[row][col].has_value():
+                    self.valued_cells += 1
 
-    def check_row_hermit(self):
-        res = False
-        for index in range(9):
-            dic = self.row_dic[index]
-            for num, reps in dic.items():
-                if reps == 1:
-                    row, col = self.find_cell_by_num(self.get_row(index), num)
-                    self.update_value(row, col, num)
-                    self.first_stage()
-                    res = True
-        return res
-
-    def check_col_hermit(self):
-        res = False
-        for index in range(9):
-            dic = self.col_dic[index]
-            for num, reps in dic.items():
-                if reps == 1:
-                    row, col = self.find_cell_by_num(self.get_col(index), num)
-                    self.update_value(row, col, num)
-                    self.first_stage()
-                    res = True
-        return res
-
-    def check_box_hermit(self):
-        res = False
-        for index in range(9):
-            dic = self.box_dic[index]
-            for num, reps in dic.items():
-                if reps == 1:
-                    row, col = self.find_cell_by_num(self.get_box(index), num)
-                    self.update_value(row, col, num)
-                    self.first_stage()
-                    res = True
-        return res
-
-    # ________________________________________________________________________________________________________
-    # ___________________________________THIRD STAGE_________________________________________________________
-    # ________________________________________________________________________________________________________
-    def third_stage(self):
-        def b_of(pair):
-            return self.box_of(pair[0], pair[1])
-        def r_of(pair):
-            return pair[0]
-        def c_of(pair):
-            return pair[1]
-        res = False
-        for i in range(9):
-            row_res = self.check_outer_gp(self.get_row(i), b_of, self.get_box)
-            col_res = self.check_outer_gp(self.get_col(i), b_of, self.get_box)
-            box_r_res = self.check_outer_gp(self.get_box(i), r_of, self.get_row)
-            box_c_res = self.check_outer_gp(self.get_box(i), c_of, self.get_col)
-            res = res or row_res or col_res or box_r_res or box_c_res
-        print(res)
-
-    def outer_prune(self, prune_list, exception_list, num):
-        res = False
-        for pair in prune_list:
-            cell = self.grid[pair[0]][pair[1]]
-            if cell.value == 0 and pair not in exception_list and num in cell.a_set:
-                cell.a_set.remove(num)
-                res = True
-        return res
-
-    def check_outer_gp(self, list_pair, split_f, list_prune_f):
-        res = False
-        list_pair_av = self.get_available(list_pair)
-        for num in range(1, 10):
-            split_value = -1
-            for pair in list_pair_av:
-                cell = self.grid[pair[0]][pair[1]]
-                if num in cell.a_set:
-                    current_value = split_f(pair)
-                    if split_value == -1:
-                        split_value = current_value
-                    elif split_value != current_value:
-                        split_value = -1
-                        break
-            if split_value != -1:
-                prune_res = self.outer_prune(list_prune_f(split_value), list_pair_av, num)
-                res = res or prune_res
-        return res
 
 
 
