@@ -6,6 +6,12 @@ class SudokuGrid:
     def box_of(self, row, col):
         return 3 * int(row / 3) + int(col / 3)
 
+    def box_cells(self, index):
+        root = int(math.sqrt(self.n))
+        start_row = root * int(index / root)
+        start_col = root * int(index % root)
+        return [self.grid[start_row + i][start_col + j] for i in range(root) for j in range(root)]
+
     def __init__(self, number_grid):
         self.grid = [[SudokuCell(num, True) if num != 0 else SudokuCell() for num in row] for row in number_grid]
         for row in self.I:

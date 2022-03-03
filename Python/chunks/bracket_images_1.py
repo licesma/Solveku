@@ -24,9 +24,3 @@ class Bracket:
             self.rowImage[i] = self.get_image(i)
             self.colImage[i] = self.get_image(sudoku.n + i)
             self.boxImage[i] = self.get_image(2*sudoku.n + i)
-
-    class SudokuGrid:
-        """..."""
-        def __init__(self, number_grid):
-            """..."""
-            self.brackets = Bracket(self)

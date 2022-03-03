@@ -15,7 +15,7 @@ class Bracket:
     def col_of_box(self, box_index, cell_index):
         root = int(math.sqrt(SudokuGrid.n))
         return root*(box_index%root) + (cell_index%root)
-    
+
     def get_col(self, bracket_index, cell_index):
         if bracket_index < SudokuGrid.n:
             return cell_index

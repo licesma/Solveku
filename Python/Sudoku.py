@@ -17,7 +17,9 @@ class SudokuCell:
 
 
 class Bracket:
-    def row_of_box(self, box_index, cell_index):
+
+    @staticmethod
+    def row_of_box(box_index, cell_index):
         root = int(math.sqrt(SudokuGrid.n))
         return root*int(box_index/root) + int(cell_index/root)
 
@@ -29,9 +31,11 @@ class Bracket:
         else:
             return self.row_of_box(bracket_index - 2*SudokuGrid.n, cell_index)
 
-    def col_of_box(self, box_index, cell_index):
+    @staticmethod
+    def col_of_box(box_index, cell_index):
         root = int(math.sqrt(SudokuGrid.n))
         return root*(box_index%root) + (cell_index%root)
+
     def get_col(self, bracket_index, cell_index):
         if bracket_index < SudokuGrid.n:
             return cell_index
@@ -39,7 +43,6 @@ class Bracket:
             return bracket_index - SudokuGrid.n
         else:
             return self.col_of_box(bracket_index - 2*SudokuGrid.n, cell_index)
-
 
     def get_image(self, index):
         res = set()
@@ -57,7 +60,7 @@ class Bracket:
         self.col = [[sudoku.grid[j][i] for j in range(sudoku.n)] for i in range(sudoku.n)]
         self.box = [sudoku.box_cells(i) for i in range(sudoku.n)]
         self.all = [self.row[i] if i < sudoku.n else self.col[i - sudoku.n] if i < 2*sudoku.n else self.box[i - 2*sudoku.n] for i in range(3*sudoku.n)]
-        self.all_images = [set() for i in range(3 * sudoku.n)]
+        self.all_images = [set() for _ in range(3 * sudoku.n)]
         self.rowImage = [self.all_images[i] for i in range(sudoku.n)]
         self.colImage = [self.all_images[i] for i in range(sudoku.n, 2 * sudoku.n)]
         self.boxImage = [self.all_images[i] for i in range(2 * sudoku.n, 3 * sudoku.n)]
@@ -71,7 +74,8 @@ class SudokuGrid:
     I = [i for i in range(n)]
     Omega = [i for i in range(1,n+1)]
 
-    def box_of(self, row, col):
+    @staticmethod
+    def box_of(row, col):
         return 3 * int(row / 3) + int(col / 3)
 
     def box_cells(self, index):
@@ -118,6 +122,7 @@ class SudokuGrid:
             self.stage_one()
         else:
             self.stage_two()
+
     def stage_two(self):
         changes = False
         for bracket_index in range(len(self.brackets.all)):
@@ -125,7 +130,7 @@ class SudokuGrid:
             candidate_map = {}
             for cell_index in SudokuGrid.I:
                 cell = bracket[cell_index]
-                if(not cell.has_value()):
+                if not cell.has_value():
                     for candidate in cell.av_set:
                         if candidate in candidate_map :
                             candidate_map[candidate] = -1
@@ -142,6 +147,7 @@ class SudokuGrid:
 
     def solve(self):
         self.stage_two()
+
     def __init__(self, number_grid):
         self.grid = [[SudokuCell(num, True) if num != 0 else SudokuCell() for num in row] for row in number_grid]
         for row in self.I:
@@ -162,19 +168,3 @@ class SudokuGrid:
             print("")
             if row%3 == 2:
                 print("")
-
-
-    def create_grid(self, number_grid):
-        for row in range(9):
-            for col in range(9):
-                if self.grid[row][col].has_value():
-                    self.valued_cells += 1
-
-
-
-
-
-
-
-
-
