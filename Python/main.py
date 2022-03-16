@@ -9,19 +9,22 @@ import Sudoku as sudo
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    number_grid = [[0, 0, 0,    0, 3, 0,    1, 7, 0],
-                   [2, 1, 0,    7, 0, 0,    0, 6, 9],
-                   [0, 5, 3,    0, 0, 0,    2, 0, 0],
+    number_grid = [[5, 0, 0,    6, 2, 0,    0, 3, 7],
+                   [0, 0, 4,    8, 9, 0,    0, 0, 0],
+                   [0, 0, 0,    0, 5, 0,    0, 0, 0],
 
-                   [0, 3, 0,    9, 0, 0,    0, 0, 7],
-                   [0, 4, 0,    0, 0, 7,    8, 0, 0],
-                   [0, 0, 0,    6, 0, 3,    0, 0, 0],
+                   [9, 3, 0,    0, 0, 0,    0, 0, 0],
+                   [0, 2, 0,    0, 0, 0,    6, 0, 5],
+                   [7, 0, 0,    0, 0, 0,    0, 0, 3],
 
-                   [0, 6, 0,    0, 0, 0,    4, 5, 1],
-                   [1, 8, 0,    0, 2, 0,    7, 0, 0],
-                   [0, 7, 0,    5, 0, 0,    9, 0, 0]]
+                   [0, 0, 0,    0, 0, 9,    0, 0, 0],
+                   [0, 0, 0,    0, 0, 0,    7, 0, 0],
+                   [6, 8, 0,    5, 7, 0,    0, 0, 2]]
+
+
     sudoku = sudo.SudokuGrid(number_grid)
     sudoku.solve()
-    sudoku.print()
+    #sudoku.print()
+    #sudoku.print_av_set()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
