@@ -59,6 +59,19 @@ class Bracket:
     def define_inverse_partitions(self):
         self.inverse_partitions = [Partition(SudokuGrid.Omega, self.inverse_av_set(bracket) ) for bracket in self.all]
 
+
+    def get_orthogonal_partition(self, bracket, omega):
+        res = {cell_index for cell_index in SudokuGrid.I if bracket[cell_index].av_set is not None and omega in bracket[cell_index].av_set}
+        return res if res else None
+
+    def define_orthogonal_partitions(self):
+        self.orthogonal_row_partition = {
+            omega: Partition(SudokuGrid.I, [self.get_orthogonal_partition(bracket, omega) for bracket in self.row])
+            for omega in SudokuGrid.Omega}
+        self.orthogonal_col_partition = {
+            omega: Partition(SudokuGrid.I, [self.get_orthogonal_partition(bracket, omega) for bracket in self.col])
+            for omega in SudokuGrid.Omega}
+
     def get_image(self, index):
         res = set()
         bracket = self.all[index]
@@ -104,10 +117,11 @@ class Partition:
         else:
             return None
 
-    def valid_result(self):
+    def is_prunable(self):
         for image in self.sub_image:
             for index in SudokuGrid.I:
                 if index not in self.sub_indexes and self.image[index] is not None and image in self.image[index]:
+                    print(self.domain[index], 'image: ', image , 'in ', self.image[index])
                     return True
         return False
 
@@ -119,10 +133,8 @@ class Partition:
                 if len(current_image) == self.m and current_image in past_images.keys():
                     self.sub_indexes.add(past_images[current_image])
                     self.sub_indexes.add(index)
-                    self.sub_image = current_image
-                    if self.valid_result():
-                        print(past_images[current_image])
-                        print(index)
+                    if self.is_prunable():
+                        self.sub_image = current_image
                         return True
                     else:
                         self.sub_indexes.remove(past_images[current_image])
@@ -135,15 +147,20 @@ class Partition:
         if partition_size == 2:
             return self.find_pair()
         else:
-            for index in self.valid_indexes:
+            valid_indexes = self.valid_indexes.copy()
+            for index in valid_indexes:
                 if index not in self.sub_indexes:
                     image = self.image[index]
                     self.sub_indexes.add(index)
+                    last_sub_image = self.sub_image.copy()
                     self.sub_image = self.sub_image.union(image)
                     if len(self.sub_image) <= self.m and self.find_sub_partition(partition_size-1):
                         return True
                     self.sub_indexes.remove(index)
-                    self.sub_image = self.sub_image.difference(image)
+                    self.sub_image = last_sub_image
+                if partition_size == self.m:
+                    self.valid_indexes.remove(index)
+
             return False
 
 class SudokuGrid:
@@ -293,7 +310,7 @@ class SudokuGrid:
         """
         x = 2
 
-    def find_sub_partition(self, partitions, m):
+    def find_subset(self, partitions, m):
         for index in range(len(partitions)):
             partition = partitions[index]
             sub_partition = partition.get_sub_partition(m)
@@ -301,10 +318,10 @@ class SudokuGrid:
                 return [index, sub_partition]
         return None
 
-    def find_naked_subsets(self, m):
-        sub_partition_result = self.find_sub_partition(self.brackets.partitions, m)
-        if sub_partition_result is not None:
-            index, sub_partition = sub_partition_result
+    def find_naked_subset(self, m):
+        subset_result = self.find_subset(self.brackets.partitions, m)
+        if subset_result is not None:
+            index, sub_partition = subset_result
             naked_indexes, naked_values = sub_partition
             bracket = self.brackets.all[index]
             print("NAKED SUBSET FOUND, Bracket: ", index, ", -cells: ", naked_indexes, " -values: ", naked_values)
@@ -312,10 +329,10 @@ class SudokuGrid:
             return True
         return False
 
-    def find_hidden_subsets(self, m):
-        sub_partition_result = self.find_sub_partition(self.brackets.inverse_partitions,m)
-        if sub_partition_result is not None:
-            index, sub_partition = sub_partition_result
+    def find_hidden_subset(self, m):
+        subset_result = self.find_subset(self.brackets.inverse_partitions,m)
+        if subset_result is not None:
+            index, sub_partition = subset_result
             hidden_values, hidden_indexes = sub_partition
             bracket = self.brackets.all[index]
             print("HIDDEN SUBSET FOUND, Bracket: ", index, ", -cells: ", hidden_indexes, " -values: ", hidden_values)
@@ -328,14 +345,40 @@ class SudokuGrid:
         self.brackets.define_inverse_partitions()
 
     def stage_four(self,m):
-        return self.find_naked_subsets(m) or self.find_hidden_subsets(m)
+        return self.find_naked_subset(m) or self.find_hidden_subset(m)
+
+    def define_orthogonal_partitions(self):
+        self.brackets.define_orthogonal_partitions()
+
+    def prune_orthogonal_difference(self, prune_brackets, skip_indexes, omega):
+        for bracket in prune_brackets:
+            for index in SudokuGrid.I:
+                if index not in skip_indexes:
+                    bracket[index].av_set_remove(omega)
+
+    def find_orthogonal_subset(self, source_partitions, orthogonal_brackets, m, source_str, normal_str):
+        for omega, partition in source_partitions.items():
+            sub_partition = partition.get_sub_partition(m)
+            if sub_partition is not None:
+                skip_indexes, prune_indexes = sub_partition
+                prune_brackets = [orthogonal_brackets[index] for index in prune_indexes]
+                self.prune_orthogonal_difference(prune_brackets, skip_indexes, omega)
+                print(source_str, skip_indexes, ' ', normal_str, prune_indexes, ' ', omega)
+                return True
+        return False
+
+    def stage_five(self, m):
+        return self.find_orthogonal_subset(self.brackets.orthogonal_row_partition, self.brackets.col, m, 'rows', 'cols') or self.find_orthogonal_subset(self.brackets.orthogonal_col_partitional, self.brackets.row, m, 'cols', 'rows')
+
+
+
 
     def solve(self):
-        self.define_bracket_partitions()
+        self.define_orthogonal_partitions()
         max_partition_length = int(self.n/2)
-        for i in range(2, max_partition_length):
-            if self.stage_four(i):
-                break;
+        for i in range(3, max_partition_length+1):
+            if self.stage_five(i):
+                break
 
     def __init__(self, number_grid):
         self.grid = [[SudokuCell(num, True) if num != 0 else SudokuCell() for num in row] for row in number_grid]
