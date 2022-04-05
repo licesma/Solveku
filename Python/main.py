@@ -9,21 +9,26 @@ import Sudoku as sudo
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    number_grid = [[0, 0, 0,    0, 0, 0,    0, 0, 0],
-                   [0, 7, 0,    0, 3, 0,    9, 2, 0],
-                   [0, 1, 9,    0, 2, 5,    6, 3, 0],
+    number_grid = [[0, 0, 0,    0, 1, 0,    0, 0, 0],
+                   [0, 6, 0,    0, 0, 0,    0, 9, 0],
+                   [0, 0, 8,    2, 4, 0,    0, 0, 6],
 
-                   [0, 0, 4,    0, 0, 0,    2, 1, 0],
-                   [0, 0, 0,    0, 0, 0,    0, 0, 0],
-                   [0, 5, 7,    0, 9, 0,    4, 6, 0],
+                   [4, 0, 0,    5, 2, 0,    0, 3, 0],
+                   [0, 0, 0,    0, 0, 1,    0, 0, 2],
+                   [0, 0, 5,    0, 0, 9,    0, 0, 0],
 
-                   [0, 9, 5,    1, 4, 0,    3, 7, 0],
-                   [7, 0, 0,    0, 0, 0,    0, 4, 0],
-                   [0, 4, 2,    3, 6, 7,    5, 9, 0]]
+                   [0, 0, 4,    8, 6, 0,    0, 0, 9],
+                   [0, 0, 0,    0, 0, 5,    0, 0, 0],
+                   [3, 0, 0,    0, 0, 0,    7, 0, 0]]
 
     sudoku = sudo.SudokuGrid(number_grid)
-    sudoku.solve()
     #sudoku.print()
+    #sudoku.find_backtracking_candidate()
+    sudoku.solve()
+    for i in range(len(sudoku.stage_list)):
+        print(i,':',sudoku.stage_list[i])
+    print(sudoku.brackets.inverse_partitions[22].get_sub_partition(2))
+    sudoku.print()
     #sudoku.print_av_set()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
