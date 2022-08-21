@@ -62,8 +62,10 @@ class Bracket:
         for omega in SudokuGrid.Omega:
             if omega not in self.all_images[bracket_index] and omega not in map.keys():
                 raise Exception("Candidate missing in bracket")
+
+
     def define_partitions(self):
-        self.partitions = [Partition(SudokuGrid.I, [cell.av_set for cell in bracket]) for bracket in self.all]
+        self.partitions = [Partition(SudokuGrid.I, [cell.av_set if cell.av_set is not None and 2 <= len(cell.av_set) else None for cell in bracket]) for bracket in self.all]
 
     def inverse_av_set(self, bracket):
          raw_av_sets = [{i for i in SudokuGrid.I if bracket[i].av_set is not None and omega in bracket[i].av_set} for omega in
@@ -73,10 +75,9 @@ class Bracket:
     def define_inverse_partitions(self):
         self.inverse_partitions = [Partition(SudokuGrid.Omega, self.inverse_av_set(bracket) ) for bracket in self.all]
 
-
     def orthogonal_bracket_function(self, bracket, omega):
         res = {cell_index for cell_index in SudokuGrid.I if bracket[cell_index].av_set is not None and omega in bracket[cell_index].av_set}
-        return res if res else None
+        return res if 2 <= len(res) else None
 
     def define_orthogonal_partitions(self):
         self.orthogonal_row_partition = {
@@ -113,7 +114,6 @@ class Bracket:
             self.all_images[i] = self.row_image[i]
             self.all_images[sudoku.n+i] = self.col_image[i]
             self.all_images[2*sudoku.n +i] = self.box_image[i]
-
 
 class Partition:
     def __init__(self, domain, image):
@@ -189,6 +189,7 @@ class SudokuGrid:
     #____________________________________________GENERAL METHODS___________________________________________________________
     #________________________________________________________________________________________________________________
     def __init__(self, number_grid):
+        self.total_backtracks = 0
         if isinstance(number_grid, SudokuGrid):
             self.grid = [[number_grid.grid[row][col].copy() for col in SudokuGrid.I] for row in SudokuGrid.I]
             self.brackets = Bracket(self)
@@ -262,6 +263,7 @@ class SudokuGrid:
         self.brackets.row_image[row].add(num)
         self.brackets.col_image[col].add(num)
         self.brackets.box_image[self.box_of(row,col)].add(num)
+        #print('UPDATE CELL', '(',row,col,')', num)
         self.update_neighbors_available_set(row, col, num)
 
     # _______________________________________________________________________________________________________________
@@ -276,6 +278,7 @@ class SudokuGrid:
                 if not cell.has_value() and len(cell.av_set) == 1:
                     changes = True
                     for num in cell.av_set:
+                        #print('STAGE 1', 'row: ', row, '  col:', col, 'val: ', num)
                         self.update_cell(row, col, num)
         return changes
 
@@ -301,6 +304,7 @@ class SudokuGrid:
                 if 0 <= cell_index :
                     row = self.brackets.get_row(bracket_index, cell_index)
                     col = self.brackets.get_col(bracket_index, cell_index)
+                    #print('STAGE 2', 'row: ', row, '  col:', col, 'val: ', candidate)
                     self.update_cell(row, col, candidate)
                     changes = True
         return changes
@@ -358,25 +362,14 @@ class SudokuGrid:
                             else:
                                 intersection_map[candidate] = None
                                 target_map[candidate] = -1
-            condition =  root_type == box_type and target_type == col_type and root_index == 3 and False
-            if condition:
-                print('#############################################################################################')
-                print(target_map)
 
             for candidate, target_index in target_map.items():
                 if target_index in SudokuGrid.I:
                     target_bracket = self.get_target_bracket(root_index, target_index, root_type, target_type)
-                    if condition:
-                        print('candidate:', candidate)
-                        print('target_bracket: ', [cell.value if cell.has_value() else cell.av_set for cell in target_bracket])
-                        print('intersection_map', [cell.av_set for cell in intersection_map[candidate]])
                     prune_res = self.prune_bracket(target_bracket, intersection_map[candidate], candidate)
+                    #if prune_res:
+                       # print('STAGE 3, ', 'root: ', root_type, root_index, 'target: ', target_type, target_index, ' val:', candidate)
                     changes = changes or prune_res
-                    if prune_res and False:
-                        print('Stage 3: ', 'root:', root_type, root_index, ' target:', target_type, target_index, ' (', candidate, ')')
-            if condition:
-                condition = False
-                print('#############################################################################################')
         return changes
 
     def stage_three(self):
@@ -409,7 +402,8 @@ class SudokuGrid:
             index, sub_partition = subset_result
             naked_indexes, naked_values = sub_partition
             bracket = self.brackets.all[index]
-            print("NAKED SUBSET FOUND, Bracket: ", index, ", -cells: ", naked_indexes, " -values: ", naked_values)
+            #print(self.brackets.partitions[index].image)
+            #print("NAKED SUBSET FOUND, Bracket: ", index, ", -cells: ", naked_indexes, " -values: ", naked_values)
             self.prune_cells([bracket[i] for i in SudokuGrid.I if i not in naked_indexes], naked_values)
             return True
         return False
@@ -420,7 +414,7 @@ class SudokuGrid:
             index, sub_partition = subset_result
             hidden_values, hidden_indexes = sub_partition
             bracket = self.brackets.all[index]
-            print("HIDDEN SUBSET FOUND, Bracket: ", index, ", -cells: ", hidden_indexes, " -values: ", hidden_values)
+            #print("HIDDEN SUBSET FOUND, Bracket: ", index, ", -cells: ", hidden_indexes, " -values: ", hidden_values)
             self.prune_cells([bracket[i] for i in hidden_indexes], [omega for omega in SudokuGrid.Omega if omega not in hidden_values])
             return True
         return False
@@ -452,7 +446,7 @@ class SudokuGrid:
                 source_indexes, target_indexes = sub_partition
                 target_brackets = [target_brackets[index] for index in target_indexes]
                 self.prune_orthogonal(target_brackets, source_indexes, omega)
-                print(source_str, source_indexes, ' ', normal_str, target_indexes, ' ', omega)
+                #print('STAGE 5', 'source: ', source_str, source_indexes, '   target:', normal_str, target_indexes, '  val:', omega)
                 return True
         return False
 
@@ -498,6 +492,7 @@ class SudokuGrid:
             elif rate_list_2[i] < rate_list_1[i] :
                 return False
         return False
+
     def find_backtracking_candidate(self):
         res = [-1, -1, -1]
         max_rate = [0 for _ in SudokuGrid.I]
@@ -517,6 +512,16 @@ class SudokuGrid:
             if len(image) != 9:
                 return False
         return True
+
+    def data(self):
+        return {'stage_one': self.stage_list.count('Stage 1'),
+                'stage_two': self.stage_list.count('Stage 2'),
+                'stage_three': self.stage_list.count('Stage 3'),
+                'stage_four': self.stage_list.count('Stage 4'),
+                'stage_five': self.stage_list.count('Stage 5'),
+                'backtrack_prune': self.stage_list.count('Backtrack prune'),
+                'backtrack': self.stage_list.count('Backtrack'),
+                'total_backtracks': self.total_backtracks}
 
     def solve(self):
         self.stage_list = []
@@ -545,15 +550,219 @@ class SudokuGrid:
                     backtrack_grid = SudokuGrid(self)
                     row, col, omega = self.find_backtracking_candidate()
                     backtrack_grid.update_cell(row, col, omega)
+                    self.total_backtracks += 1
                     try:
                         if backtrack_grid.solve():
                             self.stage_list.append('Backtrack')
                             self.stage_list = self.stage_list + backtrack_grid.stage_list
                             self.grid = backtrack_grid.grid
+                            self.total_backtracks += backtrack_grid.total_backtracks
                             return True
                         else:
                             self.prune_cells([self.grid[row][col]], [omega])
                     except:
                         self.stage_list.append('Backtrack prune')
                         self.prune_cells([self.grid[row][col]], [omega])
+                    self.total_backtracks += backtrack_grid.total_backtracks
+        return self.is_finished()
+
+    def solve_n1(self):
+        self.stage_list = []
+        while not self.is_finished():
+            if self.stage_two():
+                self.stage_list.append('Stage 2')
+            elif self.stage_three():
+                self.stage_list.append('Stage 3')
+            else:
+                half = int(self.n / 2)
+                self.define_bracket_partitions()
+                self.define_orthogonal_partitions()
+                subset_found = False
+                for m in range(2, half + 1):
+                    if self.stage_four(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 4')
+                        break
+                    if self.stage_five(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 5')
+                        break
+                if not subset_found:
+                    backtrack_grid = SudokuGrid(self)
+                    row, col, omega = self.find_backtracking_candidate()
+                    backtrack_grid.update_cell(row, col, omega)
+                    self.total_backtracks += 1
+                    try:
+                        if backtrack_grid.solve_n1():
+                            self.stage_list.append('Backtrack')
+                            self.stage_list = self.stage_list + backtrack_grid.stage_list
+                            self.grid = backtrack_grid.grid
+                            self.total_backtracks += backtrack_grid.total_backtracks
+                            return True
+                        else:
+                            self.prune_cells([self.grid[row][col]], [omega])
+                    except:
+                        self.stage_list.append('Backtrack prune')
+                        self.prune_cells([self.grid[row][col]], [omega])
+                    self.total_backtracks += backtrack_grid.total_backtracks
+        return self.is_finished()
+
+    def solve_n2(self):
+        self.stage_list = []
+        while not self.is_finished():
+            if self.stage_one():
+                self.stage_list.append('Stage 1')
+            elif self.stage_three():
+                self.stage_list.append('Stage 3')
+            else:
+                half = int(self.n / 2)
+                self.define_bracket_partitions()
+                self.define_orthogonal_partitions()
+                subset_found = False
+                for m in range(2, half + 1):
+                    if self.stage_four(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 4')
+                        break
+                    if self.stage_five(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 5')
+                        break
+                if not subset_found:
+                    backtrack_grid = SudokuGrid(self)
+                    row, col, omega = self.find_backtracking_candidate()
+                    backtrack_grid.update_cell(row, col, omega)
+                    self.total_backtracks += 1
+                    try:
+                        if backtrack_grid.solve_n2():
+                            self.stage_list.append('Backtrack')
+                            self.stage_list = self.stage_list + backtrack_grid.stage_list
+                            self.grid = backtrack_grid.grid
+                            self.total_backtracks += backtrack_grid.total_backtracks
+                            return True
+                        else:
+                            self.prune_cells([self.grid[row][col]], [omega])
+                    except:
+                        self.stage_list.append('Backtrack prune')
+                        self.prune_cells([self.grid[row][col]], [omega])
+                    self.total_backtracks += backtrack_grid.total_backtracks
+        return self.is_finished()
+
+    def solve_n3(self):
+        self.stage_list = []
+        while not self.is_finished():
+            if self.stage_one():
+                self.stage_list.append('Stage 1')
+            elif self.stage_two():
+                self.stage_list.append('Stage 2')
+            else:
+                half = int(self.n / 2)
+                self.define_bracket_partitions()
+                self.define_orthogonal_partitions()
+                subset_found = False
+                for m in range(2, half + 1):
+                    if self.stage_four(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 4')
+                        break
+                    if self.stage_five(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 5')
+                        break
+                if not subset_found:
+                    backtrack_grid = SudokuGrid(self)
+                    row, col, omega = self.find_backtracking_candidate()
+                    backtrack_grid.update_cell(row, col, omega)
+                    self.total_backtracks += 1
+                    try:
+                        if backtrack_grid.solve_n3():
+                            self.stage_list.append('Backtrack')
+                            self.stage_list = self.stage_list + backtrack_grid.stage_list
+                            self.grid = backtrack_grid.grid
+                            self.total_backtracks += backtrack_grid.total_backtracks
+                            return True
+                        else:
+                            self.prune_cells([self.grid[row][col]], [omega])
+                    except:
+                        self.stage_list.append('Backtrack prune')
+                        self.prune_cells([self.grid[row][col]], [omega])
+                    self.total_backtracks += backtrack_grid.total_backtracks
+        return self.is_finished()
+
+    def solve_n4(self):
+        self.stage_list = []
+        while not self.is_finished():
+            if self.stage_one():
+                self.stage_list.append('Stage 1')
+            elif self.stage_two():
+                self.stage_list.append('Stage 2')
+            elif self.stage_three():
+                self.stage_list.append('Stage 3')
+            else:
+                half = int(self.n / 2)
+                self.define_bracket_partitions()
+                self.define_orthogonal_partitions()
+                subset_found = False
+                for m in range(2, half + 1):
+                    if self.stage_five(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 5')
+                        break
+                if not subset_found:
+                    backtrack_grid = SudokuGrid(self)
+                    row, col, omega = self.find_backtracking_candidate()
+                    backtrack_grid.update_cell(row, col, omega)
+                    self.total_backtracks += 1
+                    try:
+                        if backtrack_grid.solve_n4():
+                            self.stage_list.append('Backtrack')
+                            self.stage_list = self.stage_list + backtrack_grid.stage_list
+                            self.grid = backtrack_grid.grid
+                            self.total_backtracks += backtrack_grid.total_backtracks
+                            return True
+                        else:
+                            self.prune_cells([self.grid[row][col]], [omega])
+                    except:
+                        self.stage_list.append('Backtrack prune')
+                        self.prune_cells([self.grid[row][col]], [omega])
+                    self.total_backtracks += backtrack_grid.total_backtracks
+        return self.is_finished()
+
+    def solve_n5(self):
+        self.stage_list = []
+        while not self.is_finished():
+            if self.stage_one():
+                self.stage_list.append('Stage 1')
+            elif self.stage_two():
+                self.stage_list.append('Stage 2')
+            elif self.stage_three():
+                self.stage_list.append('Stage 3')
+            else:
+                half = int(self.n / 2)
+                self.define_bracket_partitions()
+                self.define_orthogonal_partitions()
+                subset_found = False
+                for m in range(2, half + 1):
+                    if self.stage_four(m):
+                        subset_found = True
+                        self.stage_list.append('Stage 4')
+                        break
+                if not subset_found:
+                    backtrack_grid = SudokuGrid(self)
+                    row, col, omega = self.find_backtracking_candidate()
+                    backtrack_grid.update_cell(row, col, omega)
+                    self.total_backtracks += 1
+                    try:
+                        if backtrack_grid.solve_n5():
+                            self.stage_list.append('Backtrack')
+                            self.stage_list = self.stage_list + backtrack_grid.stage_list
+                            self.grid = backtrack_grid.grid
+                            self.total_backtracks += backtrack_grid.total_backtracks
+                            return True
+                        else:
+                            self.prune_cells([self.grid[row][col]], [omega])
+                    except:
+                        self.stage_list.append('Backtrack prune')
+                        self.prune_cells([self.grid[row][col]], [omega])
+                    self.total_backtracks += backtrack_grid.total_backtracks
         return self.is_finished()
