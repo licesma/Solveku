@@ -1,207 +1,37 @@
 import math
-class SudokuCell:
-    n = 9
-    def __init__(self, value=0, fixed=False):
-        self.value = value
-        self.fixed = fixed
-        self.av_set = None
-        if not fixed:
-            self.av_set = set()
-
-    def has_value(self):
-        return self.value != 0
-
-    def av_set_remove(self, value):
-        if not self.has_value() and (value in self.av_set):
-            self.av_set.remove(value)
-            if len(self.av_set) == 0:
-                raise Exception("Unsolvable puzzle")
-            return True
-        return False
-
-    def copy(self):
-        copy = SudokuCell()
-        copy.value = self.value
-        if self.av_set is not None:
-            copy.av_set = self.av_set.copy()
-        copy.fixed = self.fixed
-        return copy
-
+from Cell import Cell
+from BracketContainer import BracketContainer
 row_type = "ROW"
 col_type = "COL"
 box_type = "BOX"
-class Bracket:
-
-    @staticmethod
-    def row_of_box(box_index, cell_index):
-        root = int(math.sqrt(SudokuGrid.n))
-        return root*int(box_index/root) + int(cell_index/root)
-
-    def get_row(self, bracket_index, cell_index):
-        if bracket_index < SudokuGrid.n:
-            return bracket_index
-        elif bracket_index < 2*SudokuGrid.n:
-            return cell_index
-        else:
-            return self.row_of_box(bracket_index - 2*SudokuGrid.n, cell_index)
-
-    @staticmethod
-    def col_of_box(box_index, cell_index):
-        root = int(math.sqrt(SudokuGrid.n))
-        return root*(box_index%root) + (cell_index%root)
-
-    def get_col(self, bracket_index, cell_index):
-        if bracket_index < SudokuGrid.n:
-            return cell_index
-        elif bracket_index < 2*SudokuGrid.n:
-            return bracket_index - SudokuGrid.n
-        else:
-            return self.col_of_box(bracket_index - 2*SudokuGrid.n, cell_index)
-
-    def has_every_candidate(self, bracket_index, map):
-        for omega in SudokuGrid.Omega:
-            if omega not in self.all_images[bracket_index] and omega not in map.keys():
-                raise Exception("Candidate missing in bracket")
 
 
-    def define_partitions(self):
-        self.partitions = [Partition(SudokuGrid.I, [cell.av_set if cell.av_set is not None and 2 <= len(cell.av_set) else None for cell in bracket]) for bracket in self.all]
-
-    def inverse_av_set(self, bracket):
-         raw_av_sets = [{i for i in SudokuGrid.I if bracket[i].av_set is not None and omega in bracket[i].av_set} for omega in
-         SudokuGrid.Omega]
-         return [av_set if 1 <= len(av_set) else None for av_set in raw_av_sets]
-
-    def define_inverse_partitions(self):
-        self.inverse_partitions = [Partition(SudokuGrid.Omega, self.inverse_av_set(bracket) ) for bracket in self.all]
-
-    def orthogonal_bracket_function(self, bracket, omega):
-        res = {cell_index for cell_index in SudokuGrid.I if bracket[cell_index].av_set is not None and omega in bracket[cell_index].av_set}
-        return res if 2 <= len(res) else None
-
-    def define_orthogonal_partitions(self):
-        self.orthogonal_row_partition = {
-            omega: Partition(SudokuGrid.I, [self.orthogonal_bracket_function(bracket, omega) for bracket in self.row])
-            for omega in SudokuGrid.Omega}
-        self.orthogonal_col_partition = {
-            omega: Partition(SudokuGrid.I, [self.orthogonal_bracket_function(bracket, omega) for bracket in self.col])
-            for omega in SudokuGrid.Omega}
-
-    def get_image(self, index):
-        res = set()
-        bracket = self.all[index]
-        for cell in bracket:
-            if cell.has_value():
-                if cell.value in res:
-                    raise Exception("Group constraint violated")
-                else:
-                    res.add(cell.value)
-        return res
-
-    def __init__(self, sudoku):
-        self.row = [sudoku.grid[i] for i in range(sudoku.n)]
-        self.col = [[sudoku.grid[j][i] for j in range(sudoku.n)] for i in range(sudoku.n)]
-        self.box = [sudoku.box_cells(i) for i in range(sudoku.n)]
-        self.all = [self.row[i] if i < sudoku.n else self.col[i - sudoku.n] if i < 2*sudoku.n else self.box[i - 2*sudoku.n] for i in range(3*sudoku.n)]
-        self.all_images = [None for _ in range(3 * sudoku.n)]
-        self.row_image = [self.all_images[i] for i in range(sudoku.n)]
-        self.col_image = [self.all_images[i] for i in range(sudoku.n, 2 * sudoku.n)]
-        self.box_image = [self.all_images[i] for i in range(2 * sudoku.n, 3 * sudoku.n)]
-        for i in sudoku.I:
-            self.row_image[i] = self.get_image(i)
-            self.col_image[i] = self.get_image(sudoku.n + i)
-            self.box_image[i] = self.get_image(2*sudoku.n + i)
-            self.all_images[i] = self.row_image[i]
-            self.all_images[sudoku.n+i] = self.col_image[i]
-            self.all_images[2*sudoku.n +i] = self.box_image[i]
-
-class Partition:
-    def __init__(self, domain, image):
-        self.domain = [domain[i] for i in SudokuGrid.I]
-        self.image = [image[i] for i in SudokuGrid.I]
-
-    def clear(self):
-        self.sub_indexes = set()
-        self.sub_image = set()
-        self.valid_indexes = [index for index in SudokuGrid.I if (self.image[index] is not None and len(self.image[index]) <= self.m)]
 
 
-    def get_sub_partition(self, m):
-        self.m = m
-        self.clear()
-        if self.find_sub_partition(m):
-            return [[self.domain[i] for i in self.sub_indexes], self.sub_image]
-        else:
-            return None
-
-    def is_prunable(self, current_image):
-        for image in current_image:
-            for index in SudokuGrid.I:
-                if index not in self.sub_indexes and self.image[index] is not None and image in self.image[index]:
-                    return True
-        return False
-
-    def find_pair(self):
-        past_images = {}
-        for index in self.valid_indexes:
-            if index not in  self.sub_indexes:
-                current_image = frozenset(self.image[index].union(self.sub_image))
-                if len(current_image) == self.m and current_image in past_images.keys():
-
-                    self.sub_indexes.add(past_images[current_image])
-                    self.sub_indexes.add(index)
-                    if self.is_prunable(current_image):
-                        self.sub_image = current_image
-                        return True
-                    else:
-                        self.sub_indexes.remove(past_images[current_image])
-                        self.sub_indexes.remove(index)
-                else:
-                    past_images[current_image] = index
-        return False
-
-    def find_sub_partition(self, partition_size):
-        if partition_size == 2:
-            return self.find_pair()
-        else:
-            valid_indexes = self.valid_indexes.copy()
-            for index in valid_indexes:
-                if index not in self.sub_indexes:
-                    image = self.image[index]
-                    self.sub_indexes.add(index)
-                    last_sub_image = self.sub_image.copy()
-                    self.sub_image = self.sub_image.union(image)
-                    if len(self.sub_image) <= self.m and self.find_sub_partition(partition_size-1):
-                        return True
-                    self.sub_indexes.remove(index)
-                    self.sub_image = last_sub_image
-                if partition_size == self.m:
-                    self.valid_indexes.remove(index)
-
-            return False
 
 class SudokuGrid:
-    n = 9
-    I = [i for i in range(n)]
-    Omega = [i for i in range(1,n+1)]
 
     # _______________________________________________________________________________________________________________
     #____________________________________________GENERAL METHODS___________________________________________________________
     #________________________________________________________________________________________________________________
-    def __init__(self, number_grid):
+    def __init__(self,n, number_grid):
+        self.stage_list = None
+        self.n = n
+        self.I = [i for i in range(n)]
+        self.Omega = [i for i in range(1, n + 1)]
         self.total_backtracks = 0
         if isinstance(number_grid, SudokuGrid):
             self.grid = [[number_grid.grid[row][col].copy() for col in SudokuGrid.I] for row in SudokuGrid.I]
-            self.brackets = Bracket(self)
+            self.brackets = BracketContainer(self)
         else:
-            self.grid = [[SudokuCell(num, True) if num != 0 else SudokuCell() for num in row] for row in number_grid]
+            self.grid = [[Cell(num, True) if num != 0 else Cell() for num in row] for row in number_grid]
             for row in self.I:
                 for col in self.I:
                     cell = self.grid[row][col]
                     if not cell.has_value():
                         for val in self.Omega:
                             cell.av_set.add(val)
-            self.brackets = Bracket(self)
+            self.brackets = BracketContainer(self)
             self.define_available_sets()
 
 
@@ -246,8 +76,8 @@ class SudokuGrid:
                     print("{}")
             print("_____________")
     # _______________________________________________________________________________________________________________
-    #__________________________________________UPDATE CELL___________________________________________________________
-    #________________________________________________________________________________________________________________
+    # __________________________________________UPDATE CELL___________________________________________________________
+    #  _______________________________________________________________________________________________________________
 
     def update_neighbors_available_set(self, row, col, num):
         for it in self.I:
@@ -263,7 +93,6 @@ class SudokuGrid:
         self.brackets.row_image[row].add(num)
         self.brackets.col_image[col].add(num)
         self.brackets.box_image[self.box_of(row,col)].add(num)
-        #print('UPDATE CELL', '(',row,col,')', num)
         self.update_neighbors_available_set(row, col, num)
 
     # _______________________________________________________________________________________________________________
@@ -278,7 +107,6 @@ class SudokuGrid:
                 if not cell.has_value() and len(cell.av_set) == 1:
                     changes = True
                     for num in cell.av_set:
-                        #print('STAGE 1', 'row: ', row, '  col:', col, 'val: ', num)
                         self.update_cell(row, col, num)
         return changes
 
@@ -304,7 +132,6 @@ class SudokuGrid:
                 if 0 <= cell_index :
                     row = self.brackets.get_row(bracket_index, cell_index)
                     col = self.brackets.get_col(bracket_index, cell_index)
-                    #print('STAGE 2', 'row: ', row, '  col:', col, 'val: ', candidate)
                     self.update_cell(row, col, candidate)
                     changes = True
         return changes
@@ -367,8 +194,6 @@ class SudokuGrid:
                 if target_index in SudokuGrid.I:
                     target_bracket = self.get_target_bracket(root_index, target_index, root_type, target_type)
                     prune_res = self.prune_bracket(target_bracket, intersection_map[candidate], candidate)
-                    #if prune_res:
-                       # print('STAGE 3, ', 'root: ', root_type, root_index, 'target: ', target_type, target_index, ' val:', candidate)
                     changes = changes or prune_res
         return changes
 
@@ -388,40 +213,38 @@ class SudokuGrid:
                 cell.av_set_remove(omega)
 
 
-    def find_subset(self, partitions, m):
-        for index in range(len(partitions)):
-            partition = partitions[index]
-            sub_partition = partition.get_sub_partition(m)
-            if sub_partition is not None:
-                return [index, sub_partition]
+    def find_subset(self, covers, m):
+        for index in range(len(covers)):
+            cover = covers[index]
+            sub_cover = cover.get_sub_cover(m)
+            if sub_cover is not None:
+                return [index, sub_cover]
         return None
 
     def find_naked_subset(self, m):
-        subset_result = self.find_subset(self.brackets.partitions, m)
+        subset_result = self.find_subset(self.brackets.covers, m)
         if subset_result is not None:
-            index, sub_partition = subset_result
-            naked_indexes, naked_values = sub_partition
+            index, sub_cover = subset_result
+            naked_indexes, naked_values = sub_cover
             bracket = self.brackets.all[index]
-            #print(self.brackets.partitions[index].image)
-            #print("NAKED SUBSET FOUND, Bracket: ", index, ", -cells: ", naked_indexes, " -values: ", naked_values)
             self.prune_cells([bracket[i] for i in SudokuGrid.I if i not in naked_indexes], naked_values)
             return True
         return False
 
     def find_hidden_subset(self, m):
-        subset_result = self.find_subset(self.brackets.inverse_partitions,m)
+        subset_result = self.find_subset(self.brackets.inverse_covers,m)
         if subset_result is not None:
-            index, sub_partition = subset_result
-            hidden_values, hidden_indexes = sub_partition
+            index, sub_cover = subset_result
+            hidden_values, hidden_indexes = sub_cover
             bracket = self.brackets.all[index]
             #print("HIDDEN SUBSET FOUND, Bracket: ", index, ", -cells: ", hidden_indexes, " -values: ", hidden_values)
             self.prune_cells([bracket[i] for i in hidden_indexes], [omega for omega in SudokuGrid.Omega if omega not in hidden_values])
             return True
         return False
 
-    def define_bracket_partitions(self):
-        self.brackets.define_partitions()
-        self.brackets.define_inverse_partitions()
+    def define_bracket_covers(self):
+        self.brackets.define_covers()
+        self.brackets.define_inverse_covers()
 
     def stage_four(self,m):
         return self.find_naked_subset(m) or self.find_hidden_subset(m)
@@ -430,8 +253,8 @@ class SudokuGrid:
     # _______________________________________________________________________________________________________________
     #_____________________________________________STAGE FIVE_________________________________________________________
     #________________________________________________________________________________________________________________
-    def define_orthogonal_partitions(self):
-        self.brackets.define_orthogonal_partitions()
+    def define_orthogonal_covers(self):
+        self.brackets.define_orthogonal_covers()
 
     def prune_orthogonal(self, target_brackets, source_indexes, omega):
         for bracket in target_brackets:
@@ -439,11 +262,11 @@ class SudokuGrid:
                 if index not in source_indexes:
                     bracket[index].av_set_remove(omega)
 
-    def find_orthogonal_subset(self, source_partitions, target_brackets, m, source_str, normal_str):
-        for omega, partition in source_partitions.items():
-            sub_partition = partition.get_sub_partition(m)
-            if sub_partition is not None:
-                source_indexes, target_indexes = sub_partition
+    def find_orthogonal_subset(self, source_covers, target_brackets, m, source_str, normal_str):
+        for omega, cover in source_covers.items():
+            sub_cover = cover.get_sub_cover(m)
+            if sub_cover is not None:
+                source_indexes, target_indexes = sub_cover
                 target_brackets = [target_brackets[index] for index in target_indexes]
                 self.prune_orthogonal(target_brackets, source_indexes, omega)
                 #print('STAGE 5', 'source: ', source_str, source_indexes, '   target:', normal_str, target_indexes, '  val:', omega)
@@ -451,7 +274,7 @@ class SudokuGrid:
         return False
 
     def stage_five(self, m):
-        return self.find_orthogonal_subset(self.brackets.orthogonal_row_partition, self.brackets.col, m, 'rows', 'cols') or self.find_orthogonal_subset(self.brackets.orthogonal_col_partition, self.brackets.row, m, 'cols', 'rows')
+        return self.find_orthogonal_subset(self.brackets.orthogonal_row_cover, self.brackets.col, m, 'rows', 'cols') or self.find_orthogonal_subset(self.brackets.orthogonal_col_cover, self.brackets.row, m, 'cols', 'rows')
 
     # _______________________________________________________________________________________________________________
     #___________________________________________BACKTRACKING_________________________________________________________
@@ -534,8 +357,8 @@ class SudokuGrid:
                 self.stage_list.append('Stage 3')
             else:
                 half = int(self.n/2)
-                self.define_bracket_partitions()
-                self.define_orthogonal_partitions()
+                self.define_bracket_covers()
+                self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2,half+1):
                     if self.stage_four(m):
@@ -575,8 +398,8 @@ class SudokuGrid:
                 self.stage_list.append('Stage 3')
             else:
                 half = int(self.n / 2)
-                self.define_bracket_partitions()
-                self.define_orthogonal_partitions()
+                self.define_bracket_covers()
+                self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2, half + 1):
                     if self.stage_four(m):
@@ -616,8 +439,8 @@ class SudokuGrid:
                 self.stage_list.append('Stage 3')
             else:
                 half = int(self.n / 2)
-                self.define_bracket_partitions()
-                self.define_orthogonal_partitions()
+                self.define_bracket_covers()
+                self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2, half + 1):
                     if self.stage_four(m):
@@ -657,8 +480,8 @@ class SudokuGrid:
                 self.stage_list.append('Stage 2')
             else:
                 half = int(self.n / 2)
-                self.define_bracket_partitions()
-                self.define_orthogonal_partitions()
+                self.define_bracket_covers()
+                self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2, half + 1):
                     if self.stage_four(m):
@@ -700,8 +523,8 @@ class SudokuGrid:
                 self.stage_list.append('Stage 3')
             else:
                 half = int(self.n / 2)
-                self.define_bracket_partitions()
-                self.define_orthogonal_partitions()
+                self.define_bracket_covers()
+                self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2, half + 1):
                     if self.stage_five(m):
@@ -739,8 +562,8 @@ class SudokuGrid:
                 self.stage_list.append('Stage 3')
             else:
                 half = int(self.n / 2)
-                self.define_bracket_partitions()
-                self.define_orthogonal_partitions()
+                self.define_bracket_covers()
+                self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2, half + 1):
                     if self.stage_four(m):
