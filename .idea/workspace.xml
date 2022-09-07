@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5dd41ee7-8f96-4fd9-a143-83834cbf66d3" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Python/Constants.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Python/Utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python/Constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/Python/Constants.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Python/Sudoku.py" beforeDir="false" afterPath="$PROJECT_DIR$/Python/Sudoku.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Python/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Python/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
