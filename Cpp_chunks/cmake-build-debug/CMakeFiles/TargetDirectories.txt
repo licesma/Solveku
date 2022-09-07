@@ -1,3 +1,0 @@
-C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug/CMakeFiles/Cpp_chunks.dir
-C:/Users/lices/Documents/Tesis/Solveku/Cpp_chunks/cmake-build-debug/CMakeFiles/edit_cache.dir
