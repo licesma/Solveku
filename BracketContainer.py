@@ -4,8 +4,8 @@ from Cover import Cover
 
 class BracketContainer:
     def __init__(self, sudoku):
-        self.partitions = None
-        self.inverse_partitions = None
+        self.covers = None
+        self.inverse_covers = None
         self.n = sudoku.n
         self.I = sudoku.I
         self.Omega = sudoku.Omega
@@ -59,8 +59,8 @@ class BracketContainer:
             if omega not in self.all_images[bracket_index] and omega not in map.keys():
                 raise Exception("Candidate missing in bracket")
 
-    def define_partitions(self):
-        self.partitions = [Cover(self.I,
+    def define_covers(self):
+        self.covers = [Cover(self.I,
                                  [cell.av_set if cell.av_set is not None and 2 <= len(cell.av_set) else None for cell in
                                   bracket]) for bracket in self.all]
 
@@ -69,19 +69,19 @@ class BracketContainer:
                        self.Omega]
         return [av_set if 1 <= len(av_set) else None for av_set in raw_av_sets]
 
-    def define_inverse_partitions(self):
-        self.inverse_partitions = [Cover(self.Omega, self.inverse_av_set(bracket)) for bracket in self.all]
+    def define_inverse_covers(self):
+        self.inverse_covers = [Cover(self.Omega, self.inverse_av_set(bracket)) for bracket in self.all]
 
     def orthogonal_bracket_function(self, bracket, omega):
         res = {cell_index for cell_index in self.I if
                bracket[cell_index].av_set is not None and omega in bracket[cell_index].av_set}
         return res if 2 <= len(res) else None
 
-    def define_orthogonal_partitions(self):
-        self.orthogonal_row_partition = {
+    def define_orthogonal_covers(self):
+        self.orthogonal_row_cover = {
             omega: Cover(self.I, [self.orthogonal_bracket_function(bracket, omega) for bracket in self.row])
             for omega in self.Omega}
-        self.orthogonal_col_partition = {
+        self.orthogonal_col_cover = {
             omega: Cover(self.I, [self.orthogonal_bracket_function(bracket, omega) for bracket in self.col])
             for omega in self.Omega}
 

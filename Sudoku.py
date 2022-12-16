@@ -9,14 +9,14 @@ class SudokuGrid:
     # __________________________________________________________________________________________________________________
     # ____________________________________________GENERAL METHODS_______________________________________________________
     # __________________________________________________________________________________________________________________
-    def __init__(self,n, number_grid):
+    def __init__(self, n, number_grid):
         self.stage_list = None
         self.n = n
         self.I = [i for i in range(n)]
         self.Omega = [i for i in range(1, n + 1)]
         self.total_backtracks = 0
         if isinstance(number_grid, SudokuGrid):
-            self.grid = [[number_grid.grid[row][col].copy() for col in self.I] for row in self.I]
+            self.grid = [[number_grid.grid[row][col].deep_copy() for col in self.I] for row in self.I]
             self.brackets = BracketContainer(self)
         else:
             self.grid = [[Cell(num, True) if num != 0 else Cell() for num in row] for row in number_grid]
@@ -28,7 +28,6 @@ class SudokuGrid:
                             cell.av_set.add(val)
             self.brackets = BracketContainer(self)
             self.define_available_sets()
-
 
     def define_available_sets(self):
         for row in self.I:
@@ -142,7 +141,7 @@ class SudokuGrid:
                 return self.brackets.col[self.brackets.col_of_box(root_index, target_index)]
 
     @staticmethod
-    def prune_bracket(self, target_bracket, intersection, intersection_value):
+    def prune_bracket(target_bracket, intersection, intersection_value):
         res = False
         for cell in target_bracket:
             if cell not in intersection:
@@ -203,7 +202,7 @@ class SudokuGrid:
 
     # Shared method used for finding naked or hidden subsets.
     @staticmethod
-    def find_internal_bracket_subset(self, covers, m):
+    def find_internal_bracket_subset(covers, m):
         for index in range(len(covers)):
             cover = covers[index]
             sub_cover = cover.get_sub_cover(m)
@@ -231,8 +230,6 @@ class SudokuGrid:
                              [omega for omega in self.Omega if omega not in hidden_values])
             return True
         return False
-
-
 
     def stage_four(self,m):
         return self.find_naked_subset(m) or self.find_hidden_subset(m)
@@ -271,7 +268,7 @@ class SudokuGrid:
         return (condition_1 and not condition_2) or (not condition_1 and condition_2)
 
     @staticmethod
-    def rate_bracket(self, main_cell, bracket, omega, rate_array):
+    def rate_bracket(main_cell, bracket, omega, rate_array):
         for cell in bracket:
             av_set = cell.av_set
             if cell != main_cell and av_set is not None and omega in av_set and 2 <= len(av_set):
@@ -345,7 +342,7 @@ class SudokuGrid:
                 self.define_orthogonal_covers()
                 subset_found = False
                 for m in range(2,half+1):
-                    if STAGE_FOUR_INDEX in self.stage_four(m):
+                    if STAGE_FOUR_INDEX in active_stages and self.stage_four(m):
                         subset_found = True
                         self.stage_list.append(STAGE_FOUR_LABEL)
                         break
@@ -354,7 +351,7 @@ class SudokuGrid:
                         self.stage_list.append(STAGE_FIVE_LABEL)
                         break
                 if not subset_found:
-                    backtrack_grid = self(self)
+                    backtrack_grid = SudokuGrid(self.n, self)
                     row, col, omega = self.find_backtracking_candidate()
                     backtrack_grid.update_cell(row, col, omega)
                     self.total_backtracks += 1
@@ -372,3 +369,13 @@ class SudokuGrid:
                         self.prune_cells([self.grid[row][col]], [omega])
                     self.total_backtracks += backtrack_grid.total_backtracks
         return self.is_finished()
+
+    def print(self):
+        for row in self.I:
+            for col in self.I:
+                print(self.grid[row][col].value, end=" ")
+                if col % 3 == 2:
+                    print("", end=" ")
+            print("")
+            if row % 3 == 2:
+                print("")

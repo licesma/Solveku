@@ -17,11 +17,10 @@ if __name__ == '__main__':
                    [0, 0, 8,    0, 0, 0,    0, 3, 2],
                    [3, 0, 0,    0, 5, 0,    0, 0, 0]]
     start = timeit.default_timer()
-    sudoku = sudo.SudokuGrid(number_grid)
+    sudoku = sudo.SudokuGrid(9,number_grid)
     sudoku.solve()
     stop = timeit.default_timer()
-    print((stop-start)*1000)
-    print(sudoku.data())
-    print(sudoku)
+    print((stop-start)*1000, "ms")
+    sudoku.print()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
